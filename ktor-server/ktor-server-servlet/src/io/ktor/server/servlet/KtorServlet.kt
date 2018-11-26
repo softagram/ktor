@@ -39,7 +39,7 @@ abstract class KtorServlet : HttpServlet(), CoroutineScope {
      * Called by servlet container when the application is starting (deployment started or lazily initialized)
      */
     override fun init() {
-        BaseApplicationResponse.setupSendPipeline(application)
+        BaseApplicationResponse.setupSendPipeline(enginePipeline.sendPipeline)
         super.init()
     }
 

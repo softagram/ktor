@@ -39,6 +39,8 @@ open class ServletApplicationEngine : KtorServlet() {
             classLoader = servletContext.classLoader
         }.apply {
             monitor.subscribe(ApplicationStarting)  {
+                it.receivePipeline.merge(enginePipeline.receivePipeline)
+                it.sendPipeline.merge(enginePipeline.sendPipeline)
                 it.receivePipeline.installDefaultTransformations()
                 it.sendPipeline.installDefaultTransformations()
             }
@@ -59,8 +61,8 @@ open class ServletApplicationEngine : KtorServlet() {
      * Called by the servlet container when loading the servlet (on load)
      */
     override fun init() {
-        environment.start()
         super.init()
+        environment.start()
     }
 
     override fun destroy() {

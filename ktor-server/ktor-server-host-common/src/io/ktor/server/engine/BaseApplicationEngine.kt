@@ -29,6 +29,8 @@ abstract class BaseApplicationEngine(
 
     init {
         environment.monitor.subscribe(ApplicationStarting) {
+            it.receivePipeline.merge(pipeline.receivePipeline)
+            it.sendPipeline.merge(pipeline.sendPipeline)
             it.receivePipeline.installDefaultTransformations()
             it.sendPipeline.installDefaultTransformations()
         }

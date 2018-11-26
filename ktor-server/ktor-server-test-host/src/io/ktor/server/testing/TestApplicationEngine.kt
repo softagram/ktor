@@ -43,6 +43,7 @@ class TestApplicationEngine(
         pipeline.intercept(EnginePipeline.Call) {
             call.application.execute(call)
         }
+        BaseApplicationResponse.setupSendPipeline(pipeline.sendPipeline)
     }
 
     override fun start(wait: Boolean): ApplicationEngine {
@@ -51,7 +52,6 @@ class TestApplicationEngine(
             stop(0, 0, TimeUnit.SECONDS)
         }
         environment.start()
-        BaseApplicationResponse.setupSendPipeline(environment.application)
         return this
     }
 

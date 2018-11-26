@@ -40,11 +40,14 @@ class CIOApplicationEngine(environment: ApplicationEngineEnvironment, configure:
 
     private val stopRequest = CompletableDeferred<Unit>()
 
+    init {
+        BaseApplicationResponse.setupSendPipeline(pipeline.sendPipeline)
+    }
+
     private val serverJob = CoroutineScope(environment.parentCoroutineContext + engineDispatcher).launch(start = CoroutineStart.LAZY) {
         // starting
         withContext(userDispatcher) {
             environment.start()
-            BaseApplicationResponse.setupSendPipeline(environment.application)
         }
 
         val connectors = ArrayList<HttpServer>(environment.connectors.size)

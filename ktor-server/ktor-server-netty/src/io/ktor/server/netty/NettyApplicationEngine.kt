@@ -100,11 +100,11 @@ class NettyApplicationEngine(environment: ApplicationEngineEnvironment, configur
         pipeline.intercept(afterCall) {
             (call as? NettyApplicationCall)?.finish()
         }
+        BaseApplicationResponse.setupSendPipeline(pipeline.sendPipeline)
     }
 
     override fun start(wait: Boolean): NettyApplicationEngine {
         environment.start()
-        BaseApplicationResponse.setupSendPipeline(environment.application)
 
         channels = bootstraps.zip(environment.connectors)
             .map { it.first.bind(it.second.host, it.second.port) }
