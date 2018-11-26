@@ -104,6 +104,10 @@ class TomcatApplicationEngine(environment: ApplicationEngineEnvironment, configu
 
     private val stopped = atomic(false)
 
+    init {
+        BaseApplicationResponse.setupSendPipeline(pipeline.sendPipeline)
+    }
+
     override fun start(wait: Boolean): TomcatApplicationEngine {
         environment.start()
         server.start()
@@ -128,12 +132,12 @@ class TomcatApplicationEngine(environment: ApplicationEngineEnvironment, configu
 
     companion object {
         private val nativeNames = listOf(
-            "netty-tcnative",
-            "libnetty-tcnative",
-            "netty-tcnative-1",
-            "libnetty-tcnative-1",
-            "tcnative-1",
-            "libtcnative-1",
+//            "netty-tcnative",
+//            "libnetty-tcnative",
+//            "netty-tcnative-1",
+//            "libnetty-tcnative-1",
+//            "tcnative-1",
+//            "libtcnative-1",
             "netty-tcnative-windows-x86_64"
         )
 

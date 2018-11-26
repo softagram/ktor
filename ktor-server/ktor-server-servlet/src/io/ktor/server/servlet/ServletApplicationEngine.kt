@@ -49,7 +49,11 @@ open class ServletApplicationEngine : KtorServlet() {
 
     override val application: Application get() = environment.application
 
-    override val enginePipeline: EnginePipeline by lazy { defaultEnginePipeline(environment) }
+    override val enginePipeline: EnginePipeline by lazy {
+        defaultEnginePipeline(environment).also {
+            BaseApplicationResponse.setupSendPipeline(it.sendPipeline)
+        }
+    }
 
     override val upgrade: ServletUpgrade by lazy {
         if ("jetty" in servletContext.serverInfo?.toLowerCase() ?: "") {
