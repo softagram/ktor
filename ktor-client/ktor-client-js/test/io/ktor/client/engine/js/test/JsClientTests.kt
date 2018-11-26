@@ -56,7 +56,10 @@ class RequestTest {
             client.submitFormWithBinaryData<String>(url = "upload", formData = data())
         } catch (cause: Throwable) {
             assertEquals("Failed to fetch", cause.message)
+        } finally {
+
         }
-        Unit
+
+        return@promise Unit
     }
 }
