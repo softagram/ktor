@@ -7,6 +7,7 @@ import io.ktor.client.request.*
 import io.ktor.client.response.*
 import io.ktor.http.*
 import io.ktor.util.*
+import io.ktor.util.pipeline.*
 import kotlinx.atomicfu.*
 import kotlinx.coroutines.*
 import kotlinx.io.core.*
@@ -74,14 +75,22 @@ class HttpClient(
      * Pipeline used for sending the request
      */
     val sendPipeline: HttpSendPipeline = HttpSendPipeline().apply {
-        intercept(HttpSendPipeline.Engine) { content ->
+        val MakeCall = PipelinePhase("MakeCall")
+
+        insertPhaseBefore(HttpSendPipeline.Call, MakeCall)
+        intercept(MakeCall) { content ->
             val call = HttpClientCall(this@HttpClient)
+
             val requestData = HttpRequestBuilder().apply {
                 takeFrom(context)
                 body = content
             }.build()
 
             validateHeaders(requestData)
+        }
+
+        intercept(HttpSendPipeline.Engine) { call ->
+            check(call is HttpClientCall)
 
             val (request, response) = engine.execute(call, requestData)
 

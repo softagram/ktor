@@ -2,10 +2,13 @@ package io.ktor.client.response
 
 import io.ktor.client.call.*
 import io.ktor.http.*
+import io.ktor.util.*
 import io.ktor.util.date.*
 import kotlinx.coroutines.io.*
 import kotlin.coroutines.*
 
+@InternalAPI
+@Suppress("KDocMissingDocumentation")
 class UpgradeHttpResponse(
     override val call: HttpClientCall,
     override val requestTime: GMTDate,

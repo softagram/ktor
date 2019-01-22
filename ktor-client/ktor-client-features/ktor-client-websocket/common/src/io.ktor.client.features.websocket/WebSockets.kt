@@ -18,7 +18,6 @@ import io.ktor.util.*
 class WebSockets(
     val maxFrameSize: Long = Int.MAX_VALUE.toLong()
 ) {
-
     companion object Feature : HttpClientFeature<Unit, WebSockets> {
         override val key: AttributeKey<WebSockets> = AttributeKey("Websocket")
 
@@ -28,6 +27,8 @@ class WebSockets(
         override fun prepare(block: Unit.() -> Unit): WebSockets = WebSockets()
 
         override fun install(feature: WebSockets, scope: HttpClient) {
+            WebSocketsPlatform(feature, scope)
+
             scope.requestPipeline.intercept(HttpRequestPipeline.Render) { _ ->
                 if (!context.url.protocol.isWebsocket()) return@intercept
                 proceedWith(WebSocketContent())
@@ -59,3 +60,5 @@ class WebSockets(
         }
     }
 }
+
+internal expect fun WebSocketsPlatform(feature: WebSockets, scope: HttpClient)
