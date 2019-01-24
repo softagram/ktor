@@ -1,37 +1,34 @@
 package io.ktor.client.features.websocket
 
 import io.ktor.client.*
-import io.ktor.client.call.*
 import io.ktor.client.features.*
 import io.ktor.client.request.*
 import io.ktor.client.response.*
 import io.ktor.http.*
 import io.ktor.http.cio.websocket.*
 import io.ktor.util.*
-import kotlinx.coroutines.*
-import kotlinx.io.core.*
-import kotlin.reflect.full.*
 
 /**
  * Client WebSocket feature.
+ *
+ * @property maxFrameSize - max size of single websocket frame.
  */
+@KtorExperimentalAPI
+@UseExperimental(WebSocketInternalAPI::class)
 class WebSockets(
     val maxFrameSize: Long = Int.MAX_VALUE.toLong()
-) : Closeable {
-
-    @KtorExperimentalAPI
-    val context = CompletableDeferred<Unit>()
-
-    override fun close() {
-        context.complete(Unit)
-    }
-
+) {
     companion object Feature : HttpClientFeature<Unit, WebSockets> {
         override val key: AttributeKey<WebSockets> = AttributeKey("Websocket")
+
+        @InternalAPI
+        val sessionKey: AttributeKey<WebSocketSession> = AttributeKey("WebsocketSession")
 
         override fun prepare(block: Unit.() -> Unit): WebSockets = WebSockets()
 
         override fun install(feature: WebSockets, scope: HttpClient) {
+            WebSocketsPlatform(feature, scope)
+
             scope.requestPipeline.intercept(HttpRequestPipeline.Render) { _ ->
                 if (!context.url.protocol.isWebsocket()) return@intercept
                 proceedWith(WebSocketContent())
@@ -39,27 +36,29 @@ class WebSockets(
 
             scope.responsePipeline.intercept(HttpResponsePipeline.Transform) { (info, response) ->
                 val content = context.request.content
+                val expected = info.type
 
-                if (!info.type.isSubclassOf(WebSocketSession::class)
+                if ((expected != ClientWebSocketSession::class && expected != DefaultClientWebSocketSession::class)
                     || response !is HttpResponse
                     || response.status.value != HttpStatusCode.SwitchingProtocols.value
                     || content !is WebSocketContent
                 ) return@intercept
 
-                content.verify(response.headers)
+                val session = context.attributes.getOrNull(sessionKey) ?: return@intercept
 
-                val raw = RawWebSocket(
-                    response.content, content.output,
-                    feature.maxFrameSize,
-                    coroutineContext = response.coroutineContext
-                )
+                if (info.type == DefaultClientWebSocketSession::class) {
+                    val defaultSession = if (session !is DefaultWebSocketSession)
+                        DefaultWebSocketSession(session, feature.maxFrameSize)
+                    else session
 
-                val session = object : ClientWebSocketSession, WebSocketSession by raw {
-                    override val call: HttpClientCall = response.call
+                    proceedWith(HttpResponseContainer(info, DefaultClientWebSocketSession(context, defaultSession)))
+                    return@intercept
                 }
 
-                proceedWith(HttpResponseContainer(info, session))
+                proceedWith(HttpResponseContainer(info, DelegatingClientWebSocketSession(context, session)))
             }
         }
     }
 }
+
+internal expect fun WebSocketsPlatform(feature: WebSockets, scope: HttpClient)
